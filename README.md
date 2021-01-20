@@ -1,4 +1,4 @@
-# theeye-agent-sdk
+# theeye-bot-sdk
 
 NodeJS SDK
 
