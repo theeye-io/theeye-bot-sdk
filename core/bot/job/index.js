@@ -35,10 +35,11 @@ process.on('uncaughtException', err => {
   failureOutput(err)
 })
 
-class TheEyeTaskRunner {
-  constructor () {
+class BotJob {
+  constructor (job) {
     // parse parameters.
     // connection, keys, directories, parameters, etc
+    this.job = job
   }
 
   initialize () {
@@ -48,11 +49,11 @@ class TheEyeTaskRunner {
   /**
    * @return {Promise}
    */
-  async run (parameters) {
-    throw new Error('HELP: Extend TheEyeCore and redefine this method for your needs')
+  async main (parameters) {
+    throw new Error('HELP: Extend BotTask Class and implement this method')
   }
 
-  async main () {
+  async run () {
     try {
       const parameters = []
       for (let index = 2; index < process.argv.length; index++) {
@@ -67,4 +68,4 @@ class TheEyeTaskRunner {
   }
 }
 
-module.exports = TheEyeTaskRunner
+module.exports = BotJob
