@@ -101,4 +101,4 @@ class MailBot {
   }
 }
 
-exports.MailBot = MailBot
+module.exports = MailBot

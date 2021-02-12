@@ -1,6 +1,6 @@
 const fs = require('fs')
 const path = require('path')
-const { MailBot } = require('./lib/mailbot')
+const MailBot = require('./lib/mailbot')
 const MailApi = require('./lib/api')
 const helpers = require('./lib/helpers')
 const config = require('./config')
