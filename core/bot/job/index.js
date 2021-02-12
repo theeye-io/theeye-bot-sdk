@@ -35,6 +35,34 @@ process.on('uncaughtException', err => {
   failureOutput(err)
 })
 
+if (process.env.REDIRECT_CONSOLE_OUTPUT) {
+	console = (function(){
+		const logDump = console.log
+		const errorDump = console.error
+		const writeToFile = function (logLevel) {
+			return function (msg) {
+				logDump(msg)
+				try {
+					let logName = `${unitF}:\\facturas\\logs\\${path.parse(filenameArg).name}.log`
+					fs.appendFile(logName, `${logLevel}:${JSON.stringify(msg)}\n`, (e) => {
+						if (e) {
+							logDump('error: ' + e)
+							process.exit(1)
+						}
+					})
+				} catch (e) {
+					errorDump('cannot write to file', e)
+					process.exit(1)
+				}
+			}
+		}
+		console = {}
+		console.log = writeToFile('log')
+		console.error = writeToFile('error')
+		return console
+	})()
+}
+
 class BotJob {
   constructor (job) {
     // parse parameters.
