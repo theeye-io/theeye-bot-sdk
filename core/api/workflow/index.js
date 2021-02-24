@@ -47,6 +47,58 @@ class WorkflowApi {
       throw new Error(`[${err.response.statusCode}] ${err.response.body}`)
     }
   }
+
+  /**
+   * @param {Object}
+   * @prop {String} taskName approval task name
+   * @prop {String} taskId approval task id
+   */
+  async getApprover ({ taskName = null, taskId = null }) {
+    const wfJobId = JSON.parse(process.env.THEEYE_JOB_WORKFLOW).job_id
+    const jobs = await this.getExecutionJobs(wfJobId)
+
+    let approver = undefined
+
+    for (let index = 0; index < jobs.length && approver === undefined; index++) {
+      const job = jobs[index]
+
+      if (
+        job._type === 'ApprovalJob' &&
+        (job.name === taskName || job.task_id === taskId)
+      ) {
+        if (job.lifecycle !== 'finished') {
+          throw new Error('Approval job is waiting user action')
+        }
+
+        approver = job.result.user
+      }
+    }
+
+    return approver
+  }
+
+  /**
+   * @param {String} wfJobId The workflow job id for a workflow execution in progress.
+   */
+  async getExecutionJobs (wfJobId) {
+    const workflowId = (process.env.WORKFLOW_ID || WORKFLOW_ID)
+    const url = JSON.parse(process.env.THEEYE_API_URL || THEEYE_API_URL)
+    const jobsApi = `${url}/workflows/${workflowId}/job/${wfJobId}/jobs?access_token=${SDK_TOKEN}`
+
+    const response = await got.get(jobsApi, {
+      headers: { 'content-type': 'application/json' },
+      responseType: 'json'
+    })
+
+    const body = response.body
+
+    if (!Array.isArray(body) || !(body.length > 0) ) {
+      throw new Error('FATAL: No se pudo completar la solicitud')
+    }
+
+    console.log('success')
+    return body
+  }
 }
 
 module.exports = WorkflowApi

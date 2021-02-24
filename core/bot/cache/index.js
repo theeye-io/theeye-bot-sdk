@@ -37,18 +37,19 @@ class Cache {
     }
   }
 
-  checkEnv (cacheId = null) {
-    if (cacheId) {
-      // use this id
-    }
+	checkEnv (cacheId = null) {
+		if (!cacheId) {
+			if (process.env.THEEYE_JOB_WORKFLOW) {
+				cacheId = JSON.parse(process.env.THEEYE_JOB_WORKFLOW).job_id
+			} else if (process.env.THEEYE_JOB) {
+				cacheId = JSON.parse(process.env.THEEYE_JOB).id
+			} else {
+				cacheId = new Date().getTime()
+			}
+		}
 
-    if (process.env.THEEYE_JOB) {
-      cacheId = JSON.parse(process.env.THEEYE_JOB).task_id
-    } else {
-      cacheId = new Date().getTime()
-    }
-    return cacheId
-  }
+		return cacheId
+	}
 }
 
 module.exports = Cache
