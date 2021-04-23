@@ -1,78 +1,131 @@
 const got = require('got')
+const debug = require('debug')('theeye:indicator')
 
-class TheEyeIndicator {
-  constructor (title, type) {
-    this._title = title
-    this._type = type || 'text'
+const BASE_URL = JSON.parse(process.env.THEEYE_API_URL || JSON.stringify('https://supervisor.theeye.io'))
 
-    const customer = JSON.parse(process.env.THEEYE_ORGANIZATION_NAME)
-    const apiURL = JSON.parse(process.env.THEEYE_API_URL)
+class TheEyeIndicatorApi {
 
-    this.customerName = customer
-    this.urlRoot = `${apiURL}/indicator`
+  constructor (properties = {}, settings = {}) {
+
+    const { title, type } = properties
+
+    if (!title) {
+      throw new Error('Indicator "title" is requiered')
+    }
+
+    this.settings = {}
+    this.properties = {}
+
+    Object.assign(this.settings, settings)
+    Object.assign(this.properties, properties)
+
+    this.properties.type = (type || 'text')
   }
 
   get url () {
-    const titleURLEncoded = encodeURIComponent(this._title)
-    return `${this.urlRoot}/title/${titleURLEncoded}?access_token=${this.accessToken}&customer=${customer}`
+    const titleURLEncoded = encodeURIComponent(this.properties.title)
+    const rootURL = `${this.baseUrl}/indicator`
+
+    let url
+    if (this.properties.id) {
+      url = `${rootURL}/title/${titleURLEncoded}?access_token=${this.accessToken}`
+    } else {
+      url = `${rootURL}?access_token=${this.accessToken}`
+    }
+    return url
   }
 
-  set value (value) {
-    this._value = value
+  get baseUrl () {
+    return this.settings.baseUrl || BASE_URL
   }
 
-  set state (state) {
-    this._state = state
+  get accessToken () {
+    const token = this.settings.accessToken || process.env.THEEYE_ACCESS_TOKEN
+    return token
   }
 
-  /**
-   * @prop {Luxon<DateTime>} date
-   * @prop {String} description
-   */
-  setValue (date, description, message) {
-    const time = date.toFormat('HH:mm')
-    this._value = `${description}<br>${time} - ${message}`
-    return this
-  }
+  static async Fetch (options = {}) {
+    let { baseUrl, accessToken } = options
 
-  async put () {
-    const payload = {
-      title: this._title,
-      state: this._state,
-      value: this._value,
-      type: this._type
+    baseUrl || (baseUrl = BASE_URL)
+
+    const fetchApi = `${baseUrl}/indicator?access_token=${accessToken}`
+    const request = TheEyeIndicatorApi.Request({ url: fetchApi, method: 'get' })
+    const response = await request
+
+    if (response.statusCode < 200 || response.statusCode > 300) {
+      throw new Error(`${response.statusCode}: ${response.body}`)
     }
 
-    let response
-    console.log(this.url)
-    try {
-      response = await got.put(this.url, {
-        json: payload,
+    const payload = JSON.parse(response.body)
+    const indicators = []
+    for (let properties of payload) {
+      indicators.push( new TheEyeIndicatorApi(properties, { baseUrl, accessToken }) )
+    }
+    return indicators
+  }
+
+  async save () {
+    let request
+    if (this.properties.id) {
+      request = this.apiRequest({
+        url: this.url,
+        method: 'put', 
+        json: this.properties,
         responseType: 'json'
       })
-
-    } catch (err) {
-      console.log(err)
-      const reqErr = new Error(`${err.response.statusCode}: ${err.response.body}`)
-      console.error(reqErr)
+    } else {
+      request = this.apiRequest({
+        url: this.url,
+        method: 'post',
+        json: this.properties,
+        responseType: 'json'
+      })
     }
+
+    const response = await request
+
+    if (response.statusCode < 200 || response.statusCode > 300) {
+      throw new Error(`${response.statusCode}: ${JSON.stringify(response.body)}`)
+    }
+
+    const body = response.body
+
+    debug(body)
+
+    Object.assign(this.properties, body)
 
     return response
   }
 
-  async remove () {
-    let response
-    try {
-      response = await got.delete(this.url)
-
-    } catch (err) {
-      console.log(err)
-      const reqErr = new Error(`${err.response.statusCode}: ${err.response.body}`)
-      console.error(reqErr)
-    }
-
-    return response
+  destroy () {
+    return this.apiRequest({ url: this.url, method: 'delete' })
   }
+
+  apiRequest (options) {
+    debug(options)
+    const promise = got(options)
+      .catch(error => {
+        if (error.response) {
+          return error.response
+        }
+        throw error
+      })
+    return promise
+  }
+
+  static Request (options) {
+    debug(options)
+    const promise = got(options)
+      .catch(error => {
+        if (error.response) {
+          return error.response
+        }
+        throw error
+      })
+    return promise
+  }
+
 }
 
-module.exports = TheEyeIndicator
+module.exports = TheEyeIndicatorApi

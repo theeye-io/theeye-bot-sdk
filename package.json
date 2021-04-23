@@ -17,6 +17,8 @@
   },
   "homepage": "https://github.com/theeye-io/theeye-bot-sdk#readme",
   "dependencies": {
+    "debug": "~4.3.1",
+    "faker": "~5.5.3",
     "got": "~11.8.1"
   }
 }
