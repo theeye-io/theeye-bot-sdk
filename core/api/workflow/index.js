@@ -99,6 +99,29 @@ class WorkflowApi {
     console.log('success')
     return body
   }
+
+  async updateAcl (wfJobId, acl) {
+    const workflowId = (process.env.WORKFLOW_ID || WORKFLOW_ID)
+    const url = JSON.parse(process.env.THEEYE_API_URL)
+    const aclApi = `${url}/workflows/${workflowId}/job/${wfJobId}/acl?access_token=${SDK_TOKEN}`
+
+    debug(aclApi)
+
+    const response = await got.put(aclApi, {
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(acl),
+      responseType: 'json'
+    })
+
+    const body = response.body
+
+    if (!Array.isArray(body) || !(body.length > 0) ) {
+      throw new Error('FATAL: No se pudo completar la solicitud')
+    }
+
+    debug('success')
+    return body
+  }
 }
 
 module.exports = WorkflowApi
