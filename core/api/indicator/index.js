@@ -2,6 +2,7 @@ const https = require('https')
 const http = require('http')
 //const got = require('got')
 const debug = require('debug')('theeye:indicator')
+const { URL } = require('url')
 
 const BASE_URL = JSON.parse(process.env.THEEYE_API_URL || JSON.stringify('https://supervisor.theeye.io'))
 
