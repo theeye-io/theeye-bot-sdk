@@ -46,28 +46,30 @@ class TheEyeIndicatorApi {
     return token
   }
 
-  static async Fetch (options = {}) {
+  static Fetch (options = {}) {
     let { baseUrl, accessToken } = options
 
     baseUrl || (baseUrl = BASE_URL)
 
     const fetchApi = `${baseUrl}/indicator?access_token=${accessToken}`
     const request = TheEyeIndicatorApi.Request({ url: fetchApi, method: 'get' })
-    const response = await request
+    return request.then(response => {
 
-    if (response.statusCode < 200 || response.statusCode > 300) {
-      throw new Error(`${response.statusCode}: ${response.body}`)
-    }
+      if (response.statusCode < 200 || response.statusCode > 300) {
+        throw new Error(`${response.statusCode}: ${response.body}`)
+      }
 
-    const payload = JSON.parse(response.body)
-    const indicators = []
-    for (let properties of payload) {
-      indicators.push( new TheEyeIndicatorApi(properties, { baseUrl, accessToken }) )
-    }
-    return indicators
+      const payload = JSON.parse(response.body)
+      const indicators = []
+      for (let properties of payload) {
+        indicators.push( new TheEyeIndicatorApi(properties, { baseUrl, accessToken }) )
+      }
+
+      return indicators
+    })
   }
 
-  async save () {
+  save () {
     let request
     if (this.properties.id) {
       request = this.apiRequest({
@@ -83,26 +85,28 @@ class TheEyeIndicatorApi {
       })
     }
 
-    const response = await request
+    return request.then(response => {
 
-    if (response.statusCode < 200 || response.statusCode > 300) {
-      throw new Error(`${response.statusCode}: ${response.body}`)
-    }
+      if (response.statusCode < 200 || response.statusCode > 300) {
+        throw new Error(`${response.statusCode}: ${response.body}`)
+      }
 
-    const body = JSON.parse(response.body)
-    Object.assign(this.properties, body)
+      const body = JSON.parse(response.body)
+      Object.assign(this.properties, body)
 
-    debug(response.body, response.statusCode)
-    return this
+      debug(response.body, response.statusCode)
+      return this
+    })
   }
 
-  async destroy () {
-    const response = await this.apiRequest({ url: this.url, method: 'delete' })
-    if (response.statusCode < 200 || response.statusCode > 300) {
-      throw new Error(`${response.statusCode}: ${response.body}`)
-    }
-    debug(response.body, response.statusCode)
-    return this
+  destroy () {
+    return this.apiRequest({ url: this.url, method: 'delete' }).then( response => {
+      if (response.statusCode < 200 || response.statusCode > 300) {
+        throw new Error(`${response.statusCode}: ${response.body}`)
+      }
+      debug(response.body, response.statusCode)
+      return this
+    })
   }
 
   apiRequest (options) {
