@@ -1,4 +1,6 @@
-const got = require('got')
+const https = require('https')
+const http = require('http')
+//const got = require('got')
 const debug = require('debug')('theeye:indicator')
 
 const BASE_URL = JSON.parse(process.env.THEEYE_API_URL || JSON.stringify('https://supervisor.theeye.io'))
@@ -71,59 +73,110 @@ class TheEyeIndicatorApi {
       request = this.apiRequest({
         url: this.url,
         method: 'put', 
-        json: this.properties,
-        responseType: 'json'
+        json: this.properties
       })
     } else {
       request = this.apiRequest({
         url: this.url,
         method: 'post',
-        json: this.properties,
-        responseType: 'json'
+        json: this.properties
       })
     }
 
     const response = await request
 
     if (response.statusCode < 200 || response.statusCode > 300) {
-      throw new Error(`${response.statusCode}: ${JSON.stringify(response.body)}`)
+      throw new Error(`${response.statusCode}: ${response.body}`)
     }
 
-    const body = response.body
-
-    debug(body)
-
+    const body = JSON.parse(response.body)
     Object.assign(this.properties, body)
 
-    return response
+    debug(response.body, response.statusCode)
+    return this
   }
 
-  destroy () {
-    return this.apiRequest({ url: this.url, method: 'delete' })
+  async destroy () {
+    const response = await this.apiRequest({ url: this.url, method: 'delete' })
+    if (response.statusCode < 200 || response.statusCode > 300) {
+      throw new Error(`${response.statusCode}: ${response.body}`)
+    }
+    debug(response.body, response.statusCode)
+    return this
   }
 
   apiRequest (options) {
     debug(options)
-    const promise = got(options)
-      .catch(error => {
-        if (error.response) {
-          return error.response
-        }
-        throw error
+
+    const url = new URL(options.url)
+
+    const reqOpts = Object.assign({}, options, {
+      port: url.port,
+      hostname: url.hostname,
+      headers: {
+        'content-type': 'application/json'
+      },
+      path: `${url.pathname}${url.search}`
+    })
+
+    const request = (url.protocol==='https:'?https:http).request
+
+    return new Promise((resolve, reject) => {
+      const req = request(reqOpts, res => {
+        let str = ''
+        res.on('data', d => {
+          if (d) { str += d; }
+        })
+        res.on('end', () => {
+          res.body = str
+          resolve(res)
+        })
       })
-    return promise
+      req.on('error', error => {
+        reject(error)
+      })
+      if (options.json) {
+        req.write(JSON.stringify(options.json))
+      }
+      req.end()
+    })
   }
 
   static Request (options) {
     debug(options)
-    const promise = got(options)
-      .catch(error => {
-        if (error.response) {
-          return error.response
-        }
-        throw error
+
+    const url = new URL(options.url)
+
+    const reqOpts = Object.assign({}, options, {
+      port: url.port,
+      hostname: url.hostname,
+      headers: {
+        'content-type': 'application/json'
+      },
+      path: `${url.pathname}${url.search}`
+    })
+
+    const request = (url.protocol==='https:'?https:http).request
+
+    return new Promise((resolve, reject) => {
+      const req = request(reqOpts, res => {
+        let str = ''
+        res.on('data', d => {
+          if (d) { str += d; }
+        })
+        res.on('end', () => {
+          res.body = str
+          resolve(res)
+        })
       })
-    return promise
+      req.on('error', error => {
+        reject(error)
+      })
+      if (options.json) {
+        req.write(JSON.stringify(options.json))
+      }
+      req.end()
+    })
   }
 
 }
