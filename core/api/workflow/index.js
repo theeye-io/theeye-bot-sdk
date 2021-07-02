@@ -55,7 +55,7 @@ class WorkflowApi {
    */
   async getApprover ({ taskName = null, taskId = null }) {
     const theWfJob = JSON.parse(process.env.THEEYE_JOB_WORKFLOW)
-    const jobs = await this.getExecutionJobs(theWfJob.id, theWfJob.job_id)
+    const jobs = await this.getJobs(theWfJob.id, theWfJob.job_id)
 
     let approver = undefined
 
