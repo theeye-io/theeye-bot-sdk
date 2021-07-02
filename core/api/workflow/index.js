@@ -7,7 +7,7 @@ class WorkflowApi {
     this.apiUrl = JSON.parse(process.env.THEEYE_API_URL||"null")
     this.customerName = JSON.parse(process.env.THEEYE_ORGANIZATION_NAME||"null")
     this.accessToken = (specs.access_token || JSON.parse(process.env.THEEYE_API_ACCESS_TOKEN||"null"))
-    this.urlRoot = `${apiUrl}/workflows`
+    this.urlRoot = `${this.apiUrl}/workflows`
   }
 
   /**
