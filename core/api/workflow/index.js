@@ -3,9 +3,10 @@ const debug = require('debug')
 
 class WorkflowApi {
   constructor (specs = {}) {
-    const apiUrl = JSON.parse(process.env.THEEYE_API_URL)
-    this.customerName = JSON.parse(process.env.THEEYE_ORGANIZATION_NAME)
-    //this.accessToken = JSON.parse(process.env.THEEYE_API_ACCESS_TOKEN)
+    this.workflowJob = JSON.parse(process.env.THEEYE_JOB_WORKFLOW||"null")
+    this.apiUrl = JSON.parse(process.env.THEEYE_API_URL||"null")
+    this.customerName = JSON.parse(process.env.THEEYE_ORGANIZATION_NAME||"null")
+    this.accessToken = (specs.access_token || JSON.parse(process.env.THEEYE_API_ACCESS_TOKEN||"null"))
     this.urlRoot = `${apiUrl}/workflows`
   }
 
@@ -14,9 +15,6 @@ class WorkflowApi {
    */
   async run (options = {}) {
     const { id, secret, task_arguments } = options
-    
-    id || (id = process.env.WORKFLOW_ID)
-    secret || (secret = process.env.WORKFLOW_SECRET)
     
     if (!secret && !this.accessToken) {
       throw new Error('missing credentials: access token or secret required')
@@ -54,7 +52,7 @@ class WorkflowApi {
    * @prop {String} taskId approval task id
    */
   async getApprover ({ taskName = null, taskId = null }) {
-    const theWfJob = JSON.parse(process.env.THEEYE_JOB_WORKFLOW)
+    const theWfJob = this.workflowJob
     const jobs = await this.getJobs(theWfJob.id, theWfJob.job_id)
 
     let approver = undefined
@@ -82,8 +80,8 @@ class WorkflowApi {
    * @param {String} wfJobId The workflow job id for a workflow execution in progress.
    */
   async getJobs (workflowId, wfJobId) {
-    const url = JSON.parse(process.env.THEEYE_API_URL || THEEYE_API_URL)
-    const jobsApi = `${url}/workflows/${workflowId}/job/${wfJobId}/jobs?access_token=${SDK_TOKEN}`
+    const url = this.apiUrl
+    const jobsApi = `${url}/workflows/${workflowId}/job/${wfJobId}/jobs?access_token=${this.accessToken}`
 
     const response = await got.get(jobsApi, {
       headers: { 'content-type': 'application/json' },
@@ -100,10 +98,9 @@ class WorkflowApi {
     return body
   }
 
-  async updateAcl (wfJobId, acl) {
-    const workflowId = (process.env.WORKFLOW_ID || WORKFLOW_ID)
-    const url = JSON.parse(process.env.THEEYE_API_URL)
-    const aclApi = `${url}/workflows/${workflowId}/job/${wfJobId}/acl?access_token=${SDK_TOKEN}`
+  async updateAcl (workflowId, wfJobId, acl) {
+    const url = this.apiUrl
+    const aclApi = `${url}/workflows/${workflowId}/job/${wfJobId}/acl?access_token=${this.accessToken}`
 
     debug(aclApi)
 
