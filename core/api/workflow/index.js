@@ -4,7 +4,7 @@ const debug = require('debug')
 class WorkflowApi {
   constructor (specs = {}) {
     this.workflowJob = JSON.parse(process.env.THEEYE_JOB_WORKFLOW||"null")
-    this.apiUrl = JSON.parse(process.env.THEEYE_API_URL||"null")
+    this.apiUrl = JSON.parse(process.env.THEEYE_API_URL||'"https://supervisor.theeye.io"')
     this.customerName = JSON.parse(process.env.THEEYE_ORGANIZATION_NAME||"null")
     this.accessToken = (specs.access_token || JSON.parse(process.env.THEEYE_API_ACCESS_TOKEN||"null"))
     this.urlRoot = `${this.apiUrl}/workflows`
