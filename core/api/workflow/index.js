@@ -22,7 +22,7 @@ class WorkflowApi {
       throw new Error('missing credentials: access token or secret required')
     }
     
-		if (task_arguments && !Array.isArray(task_arguments)) {
+    if (task_arguments && !Array.isArray(task_arguments)) {
       throw new Error('task_arguments: array expected')
     }
     
@@ -54,8 +54,8 @@ class WorkflowApi {
    * @prop {String} taskId approval task id
    */
   async getApprover ({ taskName = null, taskId = null }) {
-    const wfJobId = JSON.parse(process.env.THEEYE_JOB_WORKFLOW).job_id
-    const jobs = await this.getExecutionJobs(wfJobId)
+    const theWfJob = JSON.parse(process.env.THEEYE_JOB_WORKFLOW)
+    const jobs = await this.getExecutionJobs(theWfJob.job_id)
 
     let approver = undefined
 
@@ -79,9 +79,9 @@ class WorkflowApi {
 
   /**
    * @param {String} wfJobId The workflow job id for a workflow execution in progress.
+   * @param {String} wfJobId The workflow job id for a workflow execution in progress.
    */
-  async getExecutionJobs (wfJobId) {
-    const workflowId = (process.env.WORKFLOW_ID || WORKFLOW_ID)
+  async getJobs (workflowId, wfJobId) {
     const url = JSON.parse(process.env.THEEYE_API_URL || THEEYE_API_URL)
     const jobsApi = `${url}/workflows/${workflowId}/job/${wfJobId}/jobs?access_token=${SDK_TOKEN}`
 
