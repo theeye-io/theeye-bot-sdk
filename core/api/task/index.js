@@ -10,9 +10,14 @@ class TaskApi {
 
   /**
    * @return {Task}
+   * @param {Object} options
+   * @prop {String} id
+   * @prop {String} secret
+   * @prop {Array} task_arguments
+   * @prop {Mixed} body
    */
   async run (options = {}) {
-    let { id, secret, task_arguments } = options
+    let { id, secret } = options
     
     id || (id = process.env.TASK_ID)
     secret || (secret = process.env.TASK_SECRET)
@@ -21,9 +26,11 @@ class TaskApi {
       throw new Error('missing credentials: access token or secret required')
     }
     
-    if (task_arguments && !Array.isArray(task_arguments)) {
+    if (options.task_arguments && !Array.isArray(options.task_arguments)) {
       throw new Error('task_arguments: array expected')
     }
+
+    const body = (options.task_arguments || options.body)
     
     let url
     if (secret) {
@@ -36,7 +43,7 @@ class TaskApi {
     try {
       const response = await got.post(url, {
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify(task_arguments),
+        body: JSON.stringify(body),
         responseType: 'json'
       })
 
