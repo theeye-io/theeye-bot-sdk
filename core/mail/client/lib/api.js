@@ -3,9 +3,12 @@ const http = require('http')
 const fs = require('fs')
 const qs = require('qs')
 const FormData = require('form-data')
-const config = require('../config')
 
-const API = {
+class API {
+  constructor (config) {
+    this.config = config.api
+  }
+
   /**
    * @param {Object} payload
    * @prop {String} payload.from
@@ -22,9 +25,9 @@ const API = {
     const query = qs.stringify(payload)
 
     const options = {
-      hostname: config.apiHostname,
-      port: config.apiPort,
-      path: `/api/Mails/check?${query}&access_token=${config.apiAccessToken}`,
+      hostname: this.config.hostname,
+      port: this.config.port,
+      path: `/api/Mails/check?${query}&access_token=${this.config.accessToken}`,
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -33,7 +36,7 @@ const API = {
     }
 
     return new Promise((resolve, reject) => {
-      const request = (config.protocol==='http'?http:https).request
+      const request = (this.config.protocol === 'http' ? http : https).request
       const req = request(options, res => {
         let resString = ''
         res.on('data', d => {
@@ -44,7 +47,7 @@ const API = {
       req.on('error', error => reject(error))
       req.end()
     })
-  },
+  }
 
   /**
    *
@@ -67,15 +70,15 @@ const API = {
     formData.append('file', fs.createReadStream(filePath))
 
     const options = {
-      hostname: config.apiHostname,
-      port: config.apiPort,
-      path: `/api/Mails/upload?access_token=${config.apiAccessToken}`,
+      hostname: this.config.hostname,
+      port: this.config.port,
+      path: `/api/Mails/upload?access_token=${this.config.accessToken}`,
       method: 'POST',
       headers: formData.getHeaders()
     }
 
     return new Promise((resolve, reject) => {
-      const request = (config.protocol === 'http' ? http : https).request(options)
+      const request = (this.config.protocol === 'http' ? http : https).request(options)
       formData.pipe(request)
       request.on('response', res => {
         let resString = ''
